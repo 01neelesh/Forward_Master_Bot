@@ -19,83 +19,103 @@ TARGET_GROUP_ID = -2223262741  # Change this to your target group ID
 
 async def start(update, context):
     welcome_message = (
-        "Hello! Welcome to the bot.\n"
-        "Here are the available commands:\n"
-        "/start -> Show this welcome message\n"
-        "/addgroup <group_id> -> Add a group ID to monitor\n"
-        "/info -> Information about this bot\n"
+    """ 
+    
+        /start -> Hello! Welcome to the bot.\n Here are the available commands\n
+        /addgroup <group_id> -> Add a group ID to monitor
+        /info -> Information about this bot
+        /HowToUse -> Instructions on how to use this bot
+
+        """
     )
     await update.message.reply_text(welcome_message)
 
 
-def add_group(update, context):
+async def how_to_use(update: Update, context):
+    instructions = (
+        "Here’s how to use the bot:\n"
+        "1. Use /start to get a welcome message.\n"
+        "2. Use /addgroup <group_id> to add a group ID for monitoring. "
+        "The bot will monitor messages from the added group.\n"
+        "3. Messages will be filtered and forwarded to your target group.\n"
+        "4. The bot will filter out messages containing links and other unwanted content.\n"
+        "5. You can forward messages from up to 5 groups.\n"
+        "6. The bot is always monitoring even if you are offline.\n"
+    )
+    await update.message.reply_text(instructions)
+
+# Command to add a group to the list of monitored groups
+async def add_group(update: Update, context):
     if len(source_group_ids) < 5:
         try:
             group_id = int(context.args[0])
             if group_id not in source_group_ids:
                 source_group_ids.append(group_id)
-                update.message.reply_text(f"Group ID {group_id} added for monitoring.")
+                await update.message.reply_text(f"Group ID {group_id} added for monitoring.")
             else:
-                update.message.reply_text(f"Group ID {group_id} is already added.")
+                await update.message.reply_text(f"Group ID {group_id} is already being monitored.")
         except (IndexError, ValueError):
-            update.message.reply_text("Please provide a valid group ID.")
+            await update.message.reply_text("Please provide a valid group ID.")
     else:
-        update.message.reply_text("Cannot add more than 5 groups.")
+        await update.message.reply_text("Cannot add more than 5 groups.")
 
-# --- 3. Customize Message Before Forwarding ---
+
+# Customize the message before forwarding
 def customize_message(message_text):
-    # Modify the message to remove any "forwarded from" headers
-    customized_text = message_text
-    
-    # You can add more customization logic here if needed
-    return customized_text
+    # Customize the message if needed (currently, no customization)
+    return message_text
 
-# --- 4. Filter Messages ---
+
+# Filter messages based on certain criteria
 def filter_message(message_text):
     # Filter out messages that contain links
     if "http" in message_text:
         return False
-    
-    # Custom filter rules can be added here, for example:
-    # Only allow messages with specific patterns like stock recommendations
+
+    # Allow specific patterns (stock-related messages, for example)
     allowed_patterns = [
         r'BNF \d{5} PE @\d+',  # Pattern like BNF 51400 PE @300
         r'BANKNIFTY \d{5} CE \d+',  # Pattern like BANKNIFTY 50800 CE 280-290
         r'\d+₹ To \d+₹',  # Pattern like 280₹ To 315₹
     ]
-    
+
     for pattern in allowed_patterns:
         if re.search(pattern, message_text):
             return True
-    
-    # If none of the patterns match, filter the message out
+
+    # If none of the patterns match, filter out the message
     return False
 
-# --- Message Handler for Forwarding ---
-async def forward_message(update, context):
+
+# Forward message if it passes the filter
+async def forward_message(update: Update, context):
     message = update.message
     if message.chat_id in source_group_ids:
         message_text = message.text or ""
-        
+
         # Apply the filter
         if filter_message(message_text):
             # Customize the message
             customized_text = customize_message(message_text)
-            
+
             # Forward the customized message to the target group
             await context.bot.send_message(chat_id=TARGET_GROUP_ID, text=customized_text)
 
-# --- 5. Info Command ---
-async def info(update, context):
-   await update.message.reply_text("Visit here : https://www.linkedin.com/in/01neelesh/ ")
 
-# --- 6. Main Function to Run the Bot ---
+# Info command to provide information about the bot
+async def info(update: Update, context):
+    await update.message.reply_text("Visit here: https://www.linkedin.com/in/01neelesh/")
+
+
+# Main function to run the bot
 def main():
-    # Create the Application instance (async version of Updater)
+    # Create the Application instance
     application = Application.builder().token(API_TOKEN).build()
 
     # Add command handlers
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("HowToUse", how_to_use))
+    application.add_handler(CommandHandler("addgroup", add_group))
     application.add_handler(CommandHandler("info", info))
 
     # Add message handler to forward messages from the source groups
@@ -103,6 +123,7 @@ def main():
 
     # Run the bot until Ctrl-C is pressed
     application.run_polling()
+
 
 if __name__ == "__main__":
     main()
