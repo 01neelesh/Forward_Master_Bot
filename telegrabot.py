@@ -21,6 +21,7 @@ async def start(update: Update, context: CallbackContext):
         "/addgroup -> Add the current group to the list of monitored groups\n"
         "/removegroup -> Remove the current group from the list of monitored groups\n"
         "/settargetgroup -> Set the target group for forwarding messages\n"
+        "/removetargetgroup -> Remove the target group\n"
         "/info -> Information about this bot\n"
         "/HowToUse -> Instructions on how to use this bot"
     )
@@ -34,7 +35,7 @@ async def how_to_use(update: Update, context: CallbackContext):
         "1. **Add the bot** to a group where you want it to monitor messages.\n"
         "2. **Use the /addgroup command** from within that group. This command will add the group to the bot’s monitored list.\n"
         "3. **Set the target group** using /settargetgroup command. This is the group where the messages will be forwarded.\n"
-        "4. **If you need to change the target group** or remove a group, use the appropriate commands.\n"
+        "4. **Remove the target group** using /removetargetgroup command if needed.\n"
         "5. **The bot will filter and forward** messages from the monitored groups to the target group automatically.\n"
         "6. **The bot filters out links** and forwards valid messages based on specific patterns."
     )
@@ -51,6 +52,17 @@ async def set_target_group(update: Update, context: CallbackContext):
         await update.message.reply_text(f"Target group set to {TARGET_GROUP_ID}.")
     else:
         await update.message.reply_text("The target group has already been set.")
+
+
+# Command to remove the target group ID
+async def remove_target_group(update: Update, context: CallbackContext):
+    global TARGET_GROUP_ID
+
+    if TARGET_GROUP_ID is not None:
+        TARGET_GROUP_ID = None
+        await update.message.reply_text("The target group has been removed.")
+    else:
+        await update.message.reply_text("No target group is currently set.")
 
 
 # Command to add the current group to the list of monitored groups
@@ -119,6 +131,7 @@ def main():
     application.add_handler(CommandHandler("addgroup", add_group))
     application.add_handler(CommandHandler("removegroup", remove_group))
     application.add_handler(CommandHandler("settargetgroup", set_target_group))
+    application.add_handler(CommandHandler("removetargetgroup", remove_target_group))
     application.add_handler(CommandHandler("info", info))
 
     # Add message handler to forward messages from the source groups
