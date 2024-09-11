@@ -1,21 +1,23 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Update
+from telegram.ext import Application,CommandHandler,MessageHandler,filters
 import re
 
 API_TOKEN = "7401746042:AAHpjGxpP2yMmrbyo8IeS3iK2BvwPRcskec"
 
-
 # List of group IDs from which to forward messages
-source_group_ids = []
+source_group_ids = [
+    -1495473455,  # 1st Group
+    -1728887868,  # 2nd Group
+    -1653858095,  # 3rd Group
+    -1201665184,   # 4th Group (for testing purposes)
+    -4591680278
+]
 
 # Target group ID where the messages will be forwarded
-TARGET_GROUP_ID = -1653858095  # Change this to your target group ID
+TARGET_GROUP_ID = -2223262741  # Change this to your target group ID
 
-# Initialize the updater and dispatcher
-updater = Updater(token=API_TOKEN, use_context=True)
-dispatcher = updater.dispatcher
 
-# --- 1. Start Command ---
-def start(update, context):
+async def start(update, context):
     welcome_message = (
         "Hello! Welcome to the bot.\n"
         "Here are the available commands:\n"
@@ -23,9 +25,9 @@ def start(update, context):
         "/addgroup <group_id> -> Add a group ID to monitor\n"
         "/info -> Information about this bot\n"
     )
-    update.message.reply_text(welcome_message)
+    await update.message.reply_text(welcome_message)
 
-# --- 2. Add Group Command ---
+
 def add_group(update, context):
     if len(source_group_ids) < 5:
         try:
@@ -70,7 +72,7 @@ def filter_message(message_text):
     return False
 
 # --- Message Handler for Forwarding ---
-def forward_message(update, context):
+async def forward_message(update, context):
     message = update.message
     if message.chat_id in source_group_ids:
         message_text = message.text or ""
@@ -81,22 +83,26 @@ def forward_message(update, context):
             customized_text = customize_message(message_text)
             
             # Forward the customized message to the target group
-            context.bot.send_message(chat_id=TARGET_GROUP_ID, text=customized_text)
+            await context.bot.send_message(chat_id=TARGET_GROUP_ID, text=customized_text)
 
 # --- 5. Info Command ---
-def info(update, context):
-    update.message.reply_text("Visit here : https://www.linkedin.com/in/01neelesh/ ")
+async def info(update, context):
+   await update.message.reply_text("Visit here : https://www.linkedin.com/in/01neelesh/ ")
 
-# --- Add handlers to the dispatcher ---
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("addgroup", add_group, pass_args=True))
-dispatcher.add_handler(CommandHandler("info", info))
+# --- 6. Main Function to Run the Bot ---
+def main():
+    # Create the Application instance (async version of Updater)
+    application = Application.builder().token(API_TOKEN).build()
 
-# Message handler to forward messages from added groups
-dispatcher.add_handler(MessageHandler(Filters.text & Filters.chat_type.groups, forward_message))
+    # Add command handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("info", info))
 
-# Start the bot
-updater.start_polling()
+    # Add message handler to forward messages from the source groups
+    application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, forward_message))
 
-# Run the bot until Ctrl-C is pressed
-updater.idle()
+    # Run the bot until Ctrl-C is pressed
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()
