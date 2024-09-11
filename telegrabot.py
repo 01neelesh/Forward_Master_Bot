@@ -4,7 +4,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import re
 import logging
 
-API_TOKEN = "7401746042:AAHpjGxpP2yMmrbyo8IeS3iK2BvwPRcskec"
+API_TOKEN = "your api here"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
